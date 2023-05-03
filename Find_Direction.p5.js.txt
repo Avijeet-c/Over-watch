@@ -1,0 +1,123 @@
+let classifier;
+// Model URL
+let imageModelURL = 'https://teachablemachine.withgoogle.com/models/abmFC7UX_/';
+
+// Video
+let video;
+let flippedVideo;
+// To store the classification
+let label = "";
+
+// Additional variables for displaying direction text
+let directionText = "";
+let directionTextColor;
+
+// Load the model first
+function preload() {
+  classifier = ml5.imageClassifier(imageModelURL + 'model.json');
+}
+
+function setup() {
+  createCanvas(640, 480); // Increased canvas size for better display
+  // Create the video
+  video = createCapture(VIDEO);
+  video.size(width, height); // Set video size to match canvas size
+  video.hide();
+
+  flippedVideo = ml5.flipImage(video);
+  // Start classifying
+  classifyVideo();
+
+  // Additional setup for direction text
+  directionText = "Looking for direction...";
+  directionTextColor = color(255);
+}
+
+function draw() {
+  background(0);
+  // Draw the video
+  image(flippedVideo, 0, 0, width, height); // Use width and height to ensure video fills the canvas
+
+  // Draw the label
+  fill(255);
+  textSize(16);
+  textAlign(CENTER);
+  text(label, width / 2, height - 20); // Adjusted position of label text
+
+  // Draw the direction text
+  fill(directionTextColor);
+  textSize(24);
+  textAlign(CENTER);
+  text(directionText, width / 2, height - 50); // Position the direction text above label text
+}
+
+// Get a prediction for the current video 
+function classifyVideo() {
+  flippedVideo = ml5.flipImage(video);
+  classifier.classify(flippedVideo, gotResult);
+  flippedVideo.remove();
+}
+
+// When we get a result
+function gotResult(error, results) {
+  // If there is an error
+  if (error) {
+    console.error(error);
+    return;
+  }
+  // The results are in an array 
+  // console.log(results[0]);
+  label = results[0].label;
+
+  // Update direction text
+  directionText = getDirectionText(label);
+  directionTextColor = getDirectionTextColor(label);
+
+  // Classify 
+  classifyVideo();
+}
+
+// To get direction text 
+function getDirectionText(label) {
+  let directionText = "";
+  switch (label) {
+    case "East":
+      directionText = "You are looking to the East";
+      break;
+    case "West":
+      directionText = "You are looking to the West";
+      break;
+    case "North":
+      directionText = "You are looking to the North";
+      break;
+    case "South":
+      directionText = "You are looking to the South";
+      break;
+    default:
+      directionText = "Looking for direction...";
+  }
+  return directionText;
+}
+
+// To get direction text color based on predicted label
+function getDirectionTextColor(label) {
+  let directionTextColor;
+  switch (label) {
+    case "East":
+      directionTextColor = color(0, 255, 0); // Green color for "east"
+      break;
+    case "West":
+      directionTextColor = color(255, 0, 0); // Red color for "west"
+      break;
+    case "North":
+      directionTextColor = color(0, 0, 255); // Blue color for "north"
+      break;
+    case "South":
+      directionTextColor = color
+      (255, 255, 0); // Yellow color for "south"
+      break;
+    default:
+      directionTextColor = color(255); // White color for default text
+  }
+  return directionTextColor;
+}
